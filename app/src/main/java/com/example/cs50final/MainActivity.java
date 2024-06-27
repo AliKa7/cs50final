@@ -1,12 +1,17 @@
 package com.example.cs50final;
 
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -23,55 +28,109 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class MainActivity extends AppCompatActivity {
     Button button;
-    TextView aiAnswer;
-    TextView loadingTextView;
+    Button knowMoreButton;
+    TextView aiAnswerTW;
+    TextView loadingTW;
+
+    EditText dateET;
+    EditText countryET;
+    EditText cityET;
+    EditText pointET;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        button = findViewById(R.id.button);
-        aiAnswer = findViewById(R.id.textView);
-        loadingTextView = findViewById(R.id.loadingTextView);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                callGeminiAPI(aiAnswer);
-            }
+        knowMoreButton = findViewById(R.id.knowMoreButton);
+        knowMoreButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, DetailedAnswer.class);
+            intent.putExtra("apiCall", collectCallMessage());
+            startActivity(intent);
         });
+        button = findViewById(R.id.button);
+        knowMoreButton.setVisibility(View.INVISIBLE);
+        button.setEnabled(false);
+        dateET = findViewById(R.id.dateET);
+        countryET = findViewById(R.id.countryET);
+        cityET = findViewById(R.id.cityET);
+        pointET = findViewById(R.id.pointET);
+        TextWatcher textWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                button.setEnabled(!dateET.getText().toString().trim().isEmpty() &&
+                        !countryET.getText().toString().trim().isEmpty() &&
+                        !cityET.getText().toString().trim().isEmpty() &&
+                        !pointET.getText().toString().trim().isEmpty());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        };
+
+        dateET.addTextChangedListener(textWatcher);
+        countryET.addTextChangedListener(textWatcher);
+        cityET.addTextChangedListener(textWatcher);
+        pointET.addTextChangedListener(textWatcher);
+        aiAnswerTW = findViewById(R.id.aiAnswerTextView);
+        loadingTW = findViewById(R.id.loadingTextView);
+        aiAnswerTW.setVisibility(View.INVISIBLE);
+        loadingTW.setVisibility(View.INVISIBLE);
+        button.setOnClickListener(v -> callGeminiAPI(aiAnswerTW));
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
     }
+
     public void callGeminiAPI(TextView view) {
-// The Gemini 1.5 models are versatile and work with both text-only and multimodal prompts
-        GenerativeModel gm = new GenerativeModel(/* modelName */ "gemini-1.5-flash",
-// Access your API key as a Build Configuration variable (see "Set up your API key" above)
-                /* apiKey */ "AIzaSyCSesB2lSa0JB1759-Bz5dTyQCbwXuUNcg");
+        loadingTW.setVisibility(View.VISIBLE);
+        aiAnswerTW.setVisibility(View.INVISIBLE);
+        knowMoreButton.setVisibility(View.INVISIBLE);
+        GenerativeModel gm = new GenerativeModel(
+                "gemini-1.5-flash",
+                "AIzaSyCSesB2lSa0JB1759-Bz5dTyQCbwXuUNcg");
         GenerativeModelFutures model = GenerativeModelFutures.from(gm);
 
         Content content = new Content.Builder()
-                .addText("How are you?")
+                .addText(collectCallMessage() + "Give your answer only 'Truth' or 'False information")
                 .build();
         ListenableFuture<GenerateContentResponse> response = model.generateContent(content);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             Futures.addCallback(response, new FutureCallback<GenerateContentResponse>() {
                 @Override
                 public void onSuccess(GenerateContentResponse result) {
+                    loadingTW.setVisibility(View.INVISIBLE);
                     String resultText = result.getText();
+                    knowMoreButton.setVisibility(View.VISIBLE);
+                    view.setVisibility(View.VISIBLE);
                     view.setText(resultText);
-                    System.out.println(resultText);
                 }
 
                 @Override
-                public void onFailure(Throwable t) {
+                public void onFailure(@NonNull Throwable t) {
+                    loadingTW.setVisibility(View.INVISIBLE);
+                    view.setVisibility(View.VISIBLE);
                     view.setText("Failure!");
-                    t.printStackTrace();
                 }
             }, this.getMainExecutor());
         }
     }
 
+    public String collectCallMessage() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("I made an app FakeChecker. In that, person type in information about some recent news or fact, that he heard, and YOU should check whether this information is fake, or not.");
+        stringBuilder.append("So, you are a fact checker. Now, check this information: ");
+        stringBuilder.append("Country, to which this fact belong: ").append(countryET.getText());
+        stringBuilder.append("Date: ").append(dateET.getText());
+        stringBuilder.append("City or region: ").append(cityET.getText());
+        stringBuilder.append("The point of the fact: ").append(pointET.getText());
+        return stringBuilder.toString();
+    }
 }
