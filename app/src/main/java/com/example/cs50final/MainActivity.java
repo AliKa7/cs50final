@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class MainActivity extends AppCompatActivity {
     Button button;
+    Button resetButton;
     Button knowMoreButton;
     TextView aiAnswerTW;
     TextView loadingTW;
@@ -42,6 +43,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        resetButton = findViewById(R.id.resetButton);
+        resetButton.setVisibility(View.INVISIBLE);
+        resetButton.setOnClickListener(v -> {
+            aiAnswerTW.setVisibility(View.INVISIBLE);
+            knowMoreButton.setVisibility(View.INVISIBLE);
+            dateET.setText("");
+            countryET.setText("");
+            cityET.setText("");
+            pointET.setText("");
+            resetButton.setVisibility(View.INVISIBLE);
+        });
         knowMoreButton = findViewById(R.id.knowMoreButton);
         knowMoreButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, DetailedAnswer.class);
@@ -62,10 +74,17 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!dateET.getText().toString().isEmpty() || !countryET.getText().toString().isEmpty() ||
+                        !cityET.getText().toString().isEmpty() || !pointET.getText().toString().isEmpty()) {
+                    resetButton.setVisibility(View.VISIBLE);
+                } else {
+                    resetButton.setVisibility(View.INVISIBLE);
+                }
                 button.setEnabled(!dateET.getText().toString().trim().isEmpty() &&
                         !countryET.getText().toString().trim().isEmpty() &&
                         !cityET.getText().toString().trim().isEmpty() &&
                         !pointET.getText().toString().trim().isEmpty());
+
             }
 
             @Override

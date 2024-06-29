@@ -23,6 +23,7 @@
         android:layout_width="376dp"
         android:layout_height="700dp"
         android:text=""
+        android:scrollbars = "vertical"
         android:textAlignment="center"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -3,6 +3,7 @@ package com.example.cs50final;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.TextView;
 
@@ -32,6 +33,7 @@ public class DetailedAnswer extends AppCompatActivity {
         Intent intent = getIntent();
         apiCall = intent.getStringExtra("apiCall");
         callGeminiAPI(detailedAnswerTW);
+        detailedAnswerTW.setMovementMethod(new ScrollingMovementMethod());
     }
     public void callGeminiAPI(TextView view) {
         GenerativeModel gm = new GenerativeModel(
